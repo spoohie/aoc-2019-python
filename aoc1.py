@@ -1,11 +1,11 @@
 from functools import reduce
 
 def calculateFuel(fuel):
-	additionalFuel = int(fuel/3)-2
-	if (additionalFuel < 0):
-		return 0
+    additionalFuel = int(fuel/3)-2
+    if (additionalFuel < 0):
+        return 0
 
-	return additionalFuel + calculateFuel(additionalFuel)
+    return additionalFuel + calculateFuel(additionalFuel)
 
 data = [int(i) for i in open('input.txt', 'r')]
 

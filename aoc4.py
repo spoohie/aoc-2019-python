@@ -7,15 +7,15 @@ numbers = (str(n) for n in range(bottom, top + 1))
 
 
 def partOneCriteria(num):
-	isPair = False
-	for a, b in pairwise(num):
-		if a > b:
-			return False
+    isPair = False
+    for a, b in pairwise(num):
+        if a > b:
+            return False
 
-		if a == b:
-			isPair = True
+        if a == b:
+            isPair = True
 
-	return isPair
+    return isPair
 
 
 def pairwise(iterable):
@@ -26,7 +26,7 @@ def pairwise(iterable):
 
 
 def partTwoCriteria(num):
-	return 2 in Counter(num).values()
+    return 2 in Counter(num).values()
 
 
 viableNums = [num for num in numbers if partOneCriteria(num)]
