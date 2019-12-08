@@ -1,7 +1,5 @@
-from functools import reduce
-
 def calculateFuel(fuel):
-    additionalFuel = int(fuel/3)-2
+    additionalFuel = fuel // 3 - 2
     if (additionalFuel < 0):
         return 0
 
