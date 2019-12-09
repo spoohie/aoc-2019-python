@@ -130,8 +130,7 @@ def getLoopedAmplifierOutput(sequence):
     for i in it.cycle(range(5)):
         out = amplifiers[i].run(out)
         if (all(amplifier.wasHalted() for amplifier in amplifiers)):
-            break
-    return out
+            return out
 
 num = max(getLoopedAmplifierOutput(sequence) for sequence in it.permutations(range(5, 10)))
 print("2:", num)
