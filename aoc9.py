@@ -24,17 +24,18 @@ class DataPointer:
 
 class Computer:
 
-    def __init__(self, data, phase):
+    def __init__(self, data):
         self.__config(data)
         self.__halted = False
-        self.__input = [phase]
+        self.__relativeBase = 0
 
     def __config(self, data):
         self.__data = data
+        self.__data.extend(0 for _ in range(1000000))
         self.__data_ptr = DataPointer(self.__data)
 
-    def run(self, inp):
-        self.__input.append(inp)
+    def run(self, inp=None):
+        self.__input = inp
 
         while((i := self.__shift()) != 99):
             opcode, mode = self.__parseInstruction(str(i))
@@ -43,10 +44,9 @@ class Computer:
             elif (opcode == 2):
                 self.__calc(op.mul, mode)
             elif (opcode == 3):
-                self.__write()
+                self.__write(mode)
             elif (opcode == 4):
                 self.__lastRead = self.__read(mode)
-                return self.__lastRead
             elif (opcode == 5):
                 self.__jumpIf(op.ne, mode)
             elif (opcode == 6):
@@ -55,6 +55,8 @@ class Computer:
                 self.__storeOneIf(op.lt, mode)
             elif (opcode == 8):
                 self.__storeOneIf(op.eq, mode)
+            elif (opcode == 9):
+                self.__adjustRelativeBase(mode)
 
         self.__halted = True
         return self.__lastRead
@@ -66,21 +68,36 @@ class Computer:
         opcode = int(inst[-2:])
 
         if (opcode == 3):
+            p = int(format(inst[:-2], '0>1'))
+            if (p != 0):
+                return opcode, p
             return opcode, None
 
         elif (opcode == 4):
             p = int(format(inst[:-2], '0>1'))
             return opcode, p
-        p1, p2 = [int(s) for s in format(inst[:-2], '0>2')[::-1]]
-        return opcode, (p1, p2)
+
+        elif (opcode == 9):
+            p = int(format(inst[:-2], '0>1'))
+            return opcode, p
+
+        p1, p2, p3 = [int(s) for s in format(inst[:-2], '0>3')[::-1]]
+        return opcode, (p1, p2, p3)
 
     def __calc(self, operation, mode):
         pos1 = self.__getData(mode[0])
         pos2 = self.__getData(mode[1])
-        self.__data[self.__shift()] = operation(pos1, pos2)
+        out = operation(pos1, pos2)
+        if mode[2] == 2:
+            self.__data[self.__shift() + self.__relativeBase] = out
+        else:
+            self.__data[self.__shift()] = out
 
-    def __write(self):
-        self.__data[self.__shift()] = self.__input.pop(0)
+    def __write(self, mode):
+        if (mode == 2):
+            self.__data[self.__shift() + self.__relativeBase] = self.__input
+        else:
+            self.__data[self.__shift()] = self.__input
 
     def __read(self, mode):
         return self.__getData(mode)
@@ -95,11 +112,21 @@ class Computer:
         val = 0
         if (operation(self.__getData(mode[0]), self.__getData(mode[1]))):
             val = 1
-        self.__data[self.__shift()] = val
+
+        if mode[2] == 2:
+            self.__data[self.__shift() + self.__relativeBase] = val
+        else:
+            self.__data[self.__shift()] = val
+
+    def __adjustRelativeBase(self, mode):
+        self.__relativeBase += self.__getData(mode)
 
     def __getData(self, mode):
         if (mode == 1):
             return self.__shift()
+
+        if (mode == 2):
+            return self.__data[self.__shift() + self.__relativeBase]
 
         return self.__data[self.__shift()]
 
@@ -111,29 +138,5 @@ class Computer:
 
 data = [int(i) for i in open('input.txt', 'r').readline().split(',')]
 
-def getAmplifierOutput(sequence_iterator, inp):
-    try:
-        amp = next(sequence_iterator)
-    except StopIteration:
-        return inp
-
-    return getAmplifierOutput(sequence_iterator, Computer(data.copy(), amp).run(inp))
-
-num = max(getAmplifierOutput(iter(sequence), 0) for sequence in it.permutations(range(5)))
-print("1:", num)
-
-def getLoopedAmplifierOutput(sequence):
-    amplifiers = [Computer(data.copy(), sequence[i]) for i in range(5)]
-
-    out = 0
-    for i in it.cycle(range(5)):
-        out = amplifiers[i].run(out)
-        print(i, out)
-        if (all(amplifier.wasHalted() for amplifier in amplifiers)):
-            return out
-
-# num = max(getLoopedAmplifierOutput(sequence) for sequence in it.permutations(range(5, 10)))
-# print("2:", num)
-
-num = getLoopedAmplifierOutput((9,8,7,6,5))
-print(num)
+print("1:", Computer(data.copy()).run(1))
+print("2:", Computer(data.copy()).run(2))
