@@ -5,6 +5,11 @@ from collections import namedtuple
 Point = namedtuple('Point', 'x y')
 
 
+class points_dict(dict):
+    def __missing__(self, key):
+        return 0
+
+
 class DataPointer:
 
     def __init__(self, data):
@@ -142,11 +147,6 @@ class Computer:
         return self.__halted
 
 
-class points_dict(dict):
-    def __missing__(self, key):
-        return 0
-
-
 def move(point, current_direction, turn):
     if turn == 1:
         if current_direction == 0:
@@ -164,14 +164,13 @@ def move(point, current_direction, turn):
 
 def getLoopedOutput(starting_color):
     current_direction = 0
-    points = points_dict()
     point = Point(0, 0)
+    points = points_dict()
     points[point] = starting_color
     painter = Computer(data.copy())
     while (not painter.wasHalted()):
-        i1 = painter.run(points[point])
+        points[point] = painter.run(points[point])
         turn = painter.run()
-        points[point] = i1
         point, current_direction = move(point, current_direction, turn)
     return points
 
@@ -188,16 +187,15 @@ directions = {
 num_of_visited = len(set(getLoopedOutput(0)))
 print("1:", num_of_visited)
 
-points = getLoopedOutput(1)
 
-white_points = {point for point, color in points.items() if color == 1}
+white_points = {point for point, color in getLoopedOutput(1).items() if color == 1}
 
 max_x = max(point.x for point in white_points)
 max_y = max(point.y for point in white_points)
 min_x = min(point.x for point in white_points)
 min_y = min(point.y for point in white_points)
 
-to_print = [['#' if Point(x, y) in white_points else ' ' for x in range(min_x, max_x + 1)] for y in range(max_y, min_y - 1, -1)]
+points_to_print = [['#' if Point(x, y) in white_points else ' ' for x in range(min_x, max_x + 1)] for y in range(max_y, min_y - 1, -1)]
 
-printable = (''.join(line) for line in to_print)
+printable = (''.join(line) for line in points_to_print)
 print("2:", *printable, sep='\n')
